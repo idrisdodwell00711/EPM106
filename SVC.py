@@ -16,52 +16,18 @@ class SVM:
         self.w = None
         self.b = None
    
-        
-    # def convert_num_to_bin(self,num):
-    #     binary_num =[0,0,0,0]
-    #     match num:
-    #         case 0:
-    #                   binary_num =[0,0,0,0]
-    #         case 1:
-    #                   binary_num =[0,0,0,1]
-    #         case 2:
-    #                   binary_num =[0,0,1,0]
-    #         case 3:
-    #                   binary_num =[0,0,1,1]
-    #         case 4:
-    #                   binary_num =[0,1,0,0]
-    #         case 5:
-    #                   binary_num =[0,1,0,1]
-    #         case 6:
-    #                   binary_num =[0,1,1,0]
-    #         case 7:
-    #                   binary_num = [0,1,1,1]
-    #         case 8:
-    #                   binary_num =[1,0,0,0]
-    #         case 9:
-    #                   binary_num =[1,0,0,1]
-    #     return binary_num
    
     def fit(self, X, y):
-            n_samples, nx_features, ny_features = X.shape
-            
-            # lst = [0,0,0,0]
-            # arr = np.array(lst)
-            # y_ = np.zeros((y.shape[0], arr.shape[0]))
-
-            # for idx, i in enumerate(y):
-            #     i_nt = int(i)
-            #     y_[idx] = self.convert_num_to_bin(i_nt)
-            
+            n_samples, n_features = X.shape
             
             #The multiclassifier requires an SVM for each number (one vs all)
             #The first svm there is 0 vs every other num- so it is either a 0 or 1-9
-            y_ = np.where(y < 1, -1, 1)
+            y_ = np.where(y == 0, -1, 1)
  
             # The next svm will be 1 vs 2-9   
             
             # Intialize to create random weights
-            self.w = np.random.rand(nx_features, ny_features)
+            self.w = np.random.rand(n_features)
             self.b = 0
             print(self.w.shape)
             
@@ -101,26 +67,32 @@ if __name__ == "__main__":
           # Free parameter gamma
           if gamma == 'auto':
               gamma = 1.0/(X.shape[1] * X.var())
-              print(X.var(), 'h')
+              
           x = X
         # get gaussian kernel Equation
-          K = np.zeros((x.shape[0], X.shape[1], X.shape[2]))
+          K = np.zeros((x.shape[0], X.shape[1]))
           
           # get gaussian kernel Equation
           #the range of the list is hard coded only for diagnostics, use x.shape[0] when code is functional
-          for idx_i,i in enumerate(range(1)):
-            print(train_y[idx_i])
-            count = 0
-            for idx_j, j in enumerate(range(X.shape[1])):
-                pixel = X[idx_i][idx_j][count]
-                count = count+1
-                summ = 0
-                for idx_k, k in enumerate(range(X.shape[2])):
-                      if count != k:
-                          compare_pixel = X[idx_i][idx_j][idx_k]
-                          summ += gamma*(pixel - compare_pixel)**2
-                          K[i, j, k] = np.exp(-summ)
-          print(K[0])              
+          for idx_i,_ in enumerate(range(30)):
+            
+            count_i = 0
+            
+            for idx_j, _ in enumerate(range(X.shape[1])):
+                pixel_vector =np.array([X[idx_i][count_i], count_i])
+                
+                
+                # print(idx_j, count_i, 'pixel')
+                count_i = count_i +1
+                # summ = 0
+                
+            for idx_k, _ in enumerate(range(X.shape[1])):
+                if count_i-1 != idx_k:
+                        comparison_pixel_vector = np.array([X[idx_i][idx_k], idx_k])
+                        
+                        summ = sum(gamma*(pixel_vector - comparison_pixel_vector)**2)
+                        K[idx_i, idx_j] = np.exp(-summ)
+          print(len(K[0]))       
           return K
  
     
@@ -134,19 +106,32 @@ if __name__ == "__main__":
 
     (train_X, train_y), (test_X, test_y) = mnist.load_data()
     
-    
+    print(train_X.shape)
     n_train_samples, tr_x, tr_y = train_X.shape
     n_test_samples, t_x, t_y = test_X.shape
     
     test_X = test_X.reshape(n_test_samples, t_x, t_y)
     train_X = train_X.reshape(n_train_samples, tr_x, tr_y)
+    
+    train_X_flat = np.zeros((train_X.shape[0], train_X.shape[1]*train_X.shape[2]))
+    test_X_flat = np.zeros((test_X.shape[0], test_X.shape[1]*test_X.shape[2]))
+    
+    rang = train_X.shape[0]
+    test_rang = test_X.shape[0]
+
+    for idx, _ in enumerate(range(rang)):
+          flat_img = train_X[idx].flatten()
+          train_X_flat[idx] = flat_img
+    for idx, _ in enumerate(range(test_rang)):
+          flat_img = test_X[idx].flatten()
+          test_X_flat[idx] = flat_img
    
-    train_X = Gaussian_k(train_X, gamma=0.001)
+    train_X = Gaussian_k(train_X_flat, gamma=0.01)
     clf = SVM()
     
     w, b = clf.fit(train_X, train_y)
-    predictions = clf.predict(test_X)
-
+    predictions = clf.predict(test_X_flat)
+    test_y = np.where(test_y==0, -1, 1)
     print("SVM classification accuracy", accuracy(test_y, predictions))
     
  
