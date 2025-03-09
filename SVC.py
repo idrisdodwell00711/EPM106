@@ -25,8 +25,7 @@ class SVM:
             #The multiclassifier requires an SVM for each number (one vs all)
             #The first svm there is 0 vs every other num- so it is either a 0 or 1-9
             y_ = np.where(y == 1, -1, 1)
-            y_ = y_.reshape(-1, 1).astype(np.double)
-           
+            
             
  
             # The next svm will be 1 vs 2-9   
