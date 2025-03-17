@@ -48,7 +48,7 @@ x_test = x_test.astype(np.float32) / 255
 
 
 
-def resize_images(images, size=(14, 14)):
+def resize_images(images, size=(28, 28)):
 
     resized = [cv2.resize(img, size) for img in images]
     return np.array(resized)
@@ -104,6 +104,7 @@ class SVM:
 
         n_samples, n_features = X.shape
         
+        #init with random weights and bias at 0
         self.w = np.random.rand(n_features)
         self.b = 0
 
@@ -113,6 +114,7 @@ class SVM:
 
             loss = 0.01
             
+            #change the loss function through the epochs
             half_iter = int(self.n_iters/2)
         
             
@@ -122,7 +124,7 @@ class SVM:
                 self.lr = self.lr
                 print('half', self.lr)
             if i == three_quarts_iter:
-                self.lr = self.lr/20
+                self.lr = self.lr
                 print('3quarts', self.lr)
 
             for idx, x_i in enumerate(X):
