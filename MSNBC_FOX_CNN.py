@@ -26,14 +26,15 @@ class CNN(nn.Module):
           self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3,3), stride=(1,1), padding=(1,1))
           self.max_pool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
           self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3,3), stride=(1,1), padding=(1,1))
-          self.ft1 = nn.Linear(16*75*75, num_classes)
+          self.ft1 = nn.Linear(16*74*74, num_classes)
           
     def forward(self, X):
        layer_1 = F.relu(self.conv1(X))
        layer_2 = self.max_pool(layer_1)
        layer_3 = F.relu(self.conv2(layer_2))
        layer_4 = self.max_pool(layer_3)
-       x = layer_4.reshape[layer_4.shape[0], -1]
+       print(layer_4.shape)
+       x = layer_4.reshape(layer_4.shape[0], -1)
        x = self.ft1(x)
        
        return x
@@ -49,7 +50,9 @@ batch_size = 64
 learning_rate = 0.001
 epochs = 2
 img_transforms = transforms.Compose([
-    transforms.ToTensor()])
+    transforms.ToTensor(),
+    transforms.ColorJitter(),
+    transforms.functional.adjust_gamma()])
 
 dataset = XrayDataset(root_dir = 'Normal_COVID_Lung_Viral', csv_file = 'Normal_COVID_Lung_Viral.metadata.csv', transforms= transforms.ToTensor())
 training, test = torch.utils.data.random_split(dataset, [0.7, 0.3])
@@ -72,7 +75,7 @@ for epochs in range(epochs):
     # targets = targets.to(device = device)
     
     
-    data = data.view(data.shape[0], -1)
+    #data = data.view(data.shape[0], -1)
 
     scores = model(data)
     
@@ -101,7 +104,7 @@ def check_acc(loader, model):
           
         # x = x.to(device = device)
         # y = y.to(device = device)
-        x = x.view(x.shape[0], -1)
+        #x = x.view(x.shape[0], -1)
         
         targets_0 = ConvertTargets.convert_targets(targets)
         targets_0 = torch.Tensor(targets_0)
