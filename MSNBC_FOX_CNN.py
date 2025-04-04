@@ -8,18 +8,6 @@ from torch.utils.data import DataLoader
 from Dataloader import XrayDataset, ConvertTargets
 
 
-class NN(nn.Module):
-  def __init__(self, input_size, num_classes):
-        super(NN, self).__init__()
-        self.fit1 = nn.Linear(input_size, 50)
-        self.fit2 = nn.Linear(50, num_classes)
-
-  def forward(self, X):
-    layer_1 = F.relu(self.fit1(X))
-    layer_2 = self.fit2(layer_1)
-
-    return layer_2
-
 class CNN(nn.Module):
     def __init__(self, in_channels = 1, num_classes=4):
           super(CNN, self).__init__()
@@ -33,10 +21,11 @@ class CNN(nn.Module):
        layer_2 = self.max_pool(layer_1)
        layer_3 = F.relu(self.conv2(layer_2))
        layer_4 = self.max_pool(layer_3)
-       print(layer_4.shape)
-       x = layer_4.reshape(layer_4.shape[0], -1)
-       x = self.ft1(x)
        
+       x = layer_4.reshape(layer_4.shape[0], -1)
+       print(x.shape, 'forward')
+       x = self.ft1(x)
+       #if x.shape[0]==64:
        return x
     
 
@@ -46,13 +35,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #299*299
 input_size = 89401
 num_classes = 4
-batch_size = 64
+batch_size = 1
 learning_rate = 0.001
 epochs = 2
 img_transforms = transforms.Compose([
     transforms.ToTensor(),
-    transforms.ColorJitter(),
-    transforms.functional.adjust_gamma()])
+    transforms.ColorJitter()])
 
 dataset = XrayDataset(root_dir = 'Normal_COVID_Lung_Viral', csv_file = 'Normal_COVID_Lung_Viral.metadata.csv', transforms= transforms.ToTensor())
 training, test = torch.utils.data.random_split(dataset, [0.7, 0.3])
@@ -111,6 +99,7 @@ def check_acc(loader, model):
 
         scores = model(x)
         _, predictions = scores.max(1)
+        
         num_correct = num_correct + (predictions == targets_0).sum()
         num_samples = num_samples + predictions.size(0)
       acc = (float(num_correct)/ float(num_samples))*100
