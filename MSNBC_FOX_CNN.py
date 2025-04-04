@@ -35,7 +35,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #299*299
 input_size = 89401
 num_classes = 4
-batch_size = 1
+batch_size = 64
 learning_rate = 0.001
 epochs = 2
 img_transforms = transforms.Compose([
@@ -94,7 +94,7 @@ def check_acc(loader, model):
         # y = y.to(device = device)
         #x = x.view(x.shape[0], -1)
         
-        targets_0 = ConvertTargets.convert_targets(targets)
+        targets_0 = ConvertTargets.convert_targets(y)
         targets_0 = torch.Tensor(targets_0)
 
         scores = model(x)

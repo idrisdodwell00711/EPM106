@@ -50,5 +50,6 @@ class XrayDataset(Dataset):
         
         if self.transform:
             img = self.transform(img)
+            img = transforms.functional.adjust_gamma(img=img, gamma=1.5, gain=0.9)
         return img, y_label
         
