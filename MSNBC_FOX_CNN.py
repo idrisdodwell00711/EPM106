@@ -1,3 +1,4 @@
+from math import floor, log10
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -8,7 +9,10 @@ from torch.utils.data import DataLoader
 from Dataloader import XrayDataset, ConvertTargets
 
 
+
 class CNN(nn.Module):
+    #if you add more layers be mindful of the in and out channels and nn.Linear
+    #can try avg pooling
     def __init__(self, in_channels = 1, num_classes=4):
           super(CNN, self).__init__()
           self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3,3), stride=(1,1), padding=(1,1))
@@ -17,9 +21,10 @@ class CNN(nn.Module):
           self.ft1 = nn.Linear(16*74*74, num_classes)
           
     def forward(self, X):
-       layer_1 = F.relu(self.conv1(X))
+       #NB selu does batch norm (bn) so is a quick fix until we can sort bn
+       layer_1 = F.selu(self.conv1(X))
        layer_2 = self.max_pool(layer_1)
-       layer_3 = F.relu(self.conv2(layer_2))
+       layer_3 = F.selu(self.conv2(layer_2))
        layer_4 = self.max_pool(layer_3)
        
        x = layer_4.reshape(layer_4.shape[0], -1)
@@ -32,15 +37,17 @@ class CNN(nn.Module):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+#hps
 #299*299
 input_size = 89401
 num_classes = 4
 batch_size = 64
 learning_rate = 0.001
-epochs = 2
+epochs = 5
+
+#add your transforms here
 img_transforms = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.ColorJitter()])
+    transforms.ToTensor()])
 
 dataset = XrayDataset(root_dir = 'Normal_COVID_Lung_Viral', csv_file = 'Normal_COVID_Lung_Viral.metadata.csv', transforms= transforms.ToTensor())
 training, test = torch.utils.data.random_split(dataset, [0.7, 0.3])
@@ -57,14 +64,12 @@ opimtimzer = optim.Adam(model.parameters(), lr = learning_rate)
 
 for epochs in range(epochs):
   for batch_idx, (data, targets) in enumerate(loading_dataset):
+      
+    #uncomment when using cuda  
 
     # data = data.to(device = device)
-    
     # targets = targets.to(device = device)
     
-    
-    #data = data.view(data.shape[0], -1)
-
     scores = model(data)
     
     num_targets = ConvertTargets.convert_targets(targets)
@@ -79,20 +84,21 @@ for epochs in range(epochs):
     opimtimzer.step()
 
 
-def check_acc(loader, model):
-
-
+def check_acc(loader, model, train_set=True):
 
     num_samples = 0
     num_correct = 0
     model.eval()
 
     with torch.no_grad():
+        
       for x,y in loader:
+          
+        #uncomment when using cuda  
           
         # x = x.to(device = device)
         # y = y.to(device = device)
-        #x = x.view(x.shape[0], -1)
+       
         
         targets_0 = ConvertTargets.convert_targets(y)
         targets_0 = torch.Tensor(targets_0)
@@ -103,9 +109,13 @@ def check_acc(loader, model):
         num_correct = num_correct + (predictions == targets_0).sum()
         num_samples = num_samples + predictions.size(0)
       acc = (float(num_correct)/ float(num_samples))*100
-      print(f'Acc: {acc}:2f')
+      acc  = round(acc, -int(floor(log10(abs(acc)))) + (3 - 1))
+      if train_set:
+          print(f'Training Acc: {acc}')
+      else:
+          print(f'Test Acc: {acc}')
     model.train()
 
 
 check_acc(loading_dataset, model)
-check_acc(loading_testdataset, model)
+check_acc(loading_testdataset, model, False)
